@@ -6,10 +6,10 @@ if (-not (Get-Module -ListAvailable -Name Liquit.Server.PowerShell)) {
 }
 
 # Variables
-$GroupName = "All AAD Devices"
-$LiquitURI = 'https://john.liquit.com' # Replace this with your zone
-$username = 'local\apiaccess' # Replace this with a service account you have created for creating and accessing this information
-$password = 'IsaiahMaddux@2014' # Enter the password for that service Account
+$GroupName = "YOUR GROUP NAME"
+$LiquitURI = 'https://YOURZONE.liquit.com' # Replace this with your zone
+$username = 'local\YOURACCOUNT' # Replace this with a service account you have created for creating and accessing this information
+$password = 'YOURPASSWORD' # Enter the password for that service Account
 $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, (ConvertTo-SecureString -String $password -AsPlainText -Force)
 $LiquitDevices = [System.Collections.ArrayList]::new()
 
