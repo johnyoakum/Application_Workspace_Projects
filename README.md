@@ -10,5 +10,8 @@ For all my scripts that use the powershell commands for Application Workspace, t
 5. Modify Packages
 6. Remove Packages
 7. View Resources
+8. View Devices
+9. View Device Collections
+10. Modify Device Collections
 
 You can create a custom Access Policy and assign it to the apiuser account that you create for this process.
