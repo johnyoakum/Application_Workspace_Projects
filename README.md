@@ -13,5 +13,6 @@ For all my scripts that use the powershell commands for Application Workspace, t
 8. View Devices
 9. View Device Collections
 10. Modify Device Collections
+11. Create Device Collections
 
 You can create a custom Access Policy and assign it to the apiuser account that you create for this process.
