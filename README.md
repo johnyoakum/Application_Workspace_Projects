@@ -16,3 +16,5 @@ For all my scripts that use the powershell commands for Application Workspace, t
 11. Create Device Collections
 
 You can create a custom Access Policy and assign it to the apiuser account that you create for this process.
+
+All scripts contained in this repo are examples of what you can do. You may need to use these as a base and modify for your needs from here. There is no warranty or support available for these scripts. I can try to help, however, these are not supported by Recast Software.
