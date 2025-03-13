@@ -1,13 +1,13 @@
-﻿$tenantId = "d37cd50c-80c6-4fd2-9be2-6b24ff526332"
-$clientId = "f779d59e-d3d9-4867-b686-8bc7294ff5aa"
-$clientSecret = "8.d8Q~Oe_iEYWD0yMrk1zWvTmIS2ZslFC3EDIcpv"
+﻿$tenantId = "TENANTID"
+$clientId = "CLIENTID"
+$clientSecret = "CLIENTSECRET"
 $secureSecret = ConvertTo-SecureString $clientSecret -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ($clientId, $secureSecret)
 
 
-$LiquitURI = 'https://john.liquit.com' # Replace this with your zone
+$LiquitURI = 'https://YOURAWZONE' # Replace this with your zone
 $username = 'local\admin' # Replace this with a service account you have created for creating and accessing this information
-$password = 'IsaiahMaddux@2014' # Enter the password for that service Account
+$password = 'YOURPASSWORD' # Enter the password for that service Account
 $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, (ConvertTo-SecureString -String $password -AsPlainText -Force)
 $LiquitDevices = [System.Collections.ArrayList]::new()
 
