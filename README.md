@@ -28,3 +28,11 @@ This script that can automate the process of moving packages through the stages 
 ## Sync-EntraGroupWithAWCollection.ps1 
 
 This script will assist in syncing devices in an Entra AD group to a matcing Device Collection in Application Workspace. This will need to be modified from its original version if you want to support multiple Entra AD Groups and multiple Device Collections. This is just a starting point. This will require someone to sign in with the right permissions. If you wanted to, you could modify this to support an app registration and secret key so that you can run this as a scheduled task. This will remove any members that have been taken out of that Entra group, and add those that have been added. This will also create the Device Collection if it doesn't already exist to match the displayName of the Entra AD Group.
+
+## Import-ConfigMgrPackages.ps1
+
+This script will attempt to import in applications and packages from ConfigMgr into Application Workspace. It will not create "Launch" actions as those don't exist in ConfigMgr. This will create the install action and create all the steps for that install action based on the install command line in the ConfigMgr package/application. It will also create an uninstall action "if" there is an uninstall command specified in the ConfigMgr application. Currently there is a bug in the script that if in the install command line or the uninstall command line there is a .\ in the command, it fails to create correctly.
+
+## Sync-MultipleEntraGroupsToAW.ps1
+
+This script uses an app registration and a secret key so that you can automate the process of syncing Entra Groups to Application Workspace Groups. You will need to specify the correct groups you want to sync to. I tried to document each action so that it makes sense... This will add if there are new objects and remove if any have been removed from the Entra AD groups. In this example, Entra is the source of truth...
