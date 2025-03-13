@@ -28,13 +28,6 @@ $BroadEarlyCollection = Get-LiquitDeviceCollection -Name 'Broad Early Ring'
 $BroadLateCollection = Get-LiquitDeviceCollection -Name 'Broad Late Ring'
 $BroadLastCollection = Get-LiquitDeviceCollection -Name 'Broad Last Ring'
 
-# Get Application Workspace Collection Members
-$CanaryMembers = Get-LiquitDeviceCollectionMember -DeviceCollection $CanaryCollection
-$EarlyAdoptersMembers = Get-LiquitDeviceCollectionMember -DeviceCollection $EarlyAdopterCollection
-$BroadEarlyMembers = Get-LiquitDeviceCollectionMember -DeviceCollection $BroadEarlyCollection
-$BroadLateMembers = Get-LiquitDeviceCollectionMember -DeviceCollection $BroadLateCollection
-$BroadLastMembers = Get-LiquitDeviceCollectionMember -DeviceCollection $BroadLastCollection
-
 # Get all Entra AD Groups
 $AllGroups = Get-MgGroup
 
@@ -72,12 +65,14 @@ ForEach ($UpdateGroup in $UpdateGroups){
         #Pull List of devices to Remove
         $DevicesToRemove = $CanaryMembers | Where-Object {$_.Name -notin $GroupMembers.AdditionalProperties.displayName}
         ForEach ($DeviceToRemove in $DevicesToRemove) {
-            Remove-LiquitDeviceCollectionMember -DeviceCollection $CanaryCollection -Device $DevicesToRemove
+            $CurrentDevice = Get-LiquitDevice -ID $DeviceToRemove.ID
+            Remove-LiquitDeviceCollectionMember -DeviceCollection $CanaryCollection -Device $CurrentDevice
         }
 
         # If Entra Group is empty, clear out AW Collection
         If (!$GroupMembers) {
             ForEach ($CanaryMember in $CanaryMembers) {
+                $CurrentDevice = Get-LiquitDevice -ID $CanaryMember.ID
                 Remove-LiquitDeviceCollectionMember -DeviceCollection $CanaryCollection -Device $CanaryMember
             }
         }
@@ -97,13 +92,15 @@ ForEach ($UpdateGroup in $UpdateGroups){
         #Pull List of devices to Remove
         $DevicesToRemove = $EarlyAdoptersMembers | Where-Object {$_.Name -notin $GroupMembers.AdditionalProperties.displayName}
         ForEach ($DeviceToRemove in $DevicesToRemove) {
-            Remove-LiquitDeviceCollectionMember -DeviceCollection $EarlyAdopterCollection -Device $DevicesToRemove
+            $CurrentDevice = Get-LiquitDevice -ID $DeviceToRemove.ID
+            Remove-LiquitDeviceCollectionMember -DeviceCollection $EarlyAdopterCollection -Device $CurrentDevice
         }
 
         # If Entra Group is empty, clear out AW Collection
         If (!$GroupMembers) {
             ForEach ($EarlyAdoptersMember in $EarlyAdoptersMembers) {
-                Remove-LiquitDeviceCollectionMember -DeviceCollection $EarlyAdopterCollection -Device $EarlyAdoptersMember
+                $CurrentDevice = Get-LiquitDevice -ID $EarlyAdoptersMember.ID
+                Remove-LiquitDeviceCollectionMember -DeviceCollection $EarlyAdopterCollection -Device $CurrentDevice
             }
         }
         
@@ -122,13 +119,15 @@ ForEach ($UpdateGroup in $UpdateGroups){
         #Pull List of devices to Remove
         $DevicesToRemove = $BroadEarlyMembers | Where-Object {$_.Name -notin $GroupMembers.AdditionalProperties.displayName}
         ForEach ($DeviceToRemove in $DevicesToRemove) {
-            Remove-LiquitDeviceCollectionMember -DeviceCollection $BroadEarlyCollection -Device $DevicesToRemove
+            $CurrentDevice = Get-LiquitDevice -ID $DeviceToRemove.ID
+            Remove-LiquitDeviceCollectionMember -DeviceCollection $BroadEarlyCollection -Device $CurrentDevice
         }
 
         # If Entra Group is empty, clear out AW Collection
         If (!$GroupMembers) {
             ForEach ($BroadEarlyMember in $BroadEarlyMembers) {
-                Remove-LiquitDeviceCollectionMember -DeviceCollection $BroadEarlyCollection -Device $BroadEarlyMember
+                $CurrentDevice = Get-LiquitDevice -ID $BroadEarlyMember.ID
+                Remove-LiquitDeviceCollectionMember -DeviceCollection $BroadEarlyCollection -Device $CurrentDevice
             }
         }
         
@@ -147,13 +146,15 @@ ForEach ($UpdateGroup in $UpdateGroups){
         #Pull List of devices to Remove
         $DevicesToRemove = $BroadLateMembers | Where-Object {$_.Name -notin $GroupMembers.AdditionalProperties.displayName}
         ForEach ($DeviceToRemove in $DevicesToRemove) {
-            Remove-LiquitDeviceCollectionMember -DeviceCollection $BroadLateCollection -Device $DevicesToRemove
+            $CurrentDevice = Get-LiquitDevice -ID $DeviceToRemove.ID
+            Remove-LiquitDeviceCollectionMember -DeviceCollection $BroadLateCollection -Device $CurrentDevice
         }
 
         # If Entra Group is empty, clear out AW Collection
         If (!$GroupMembers) {
             ForEach ($BroadLateMember in $BroadLateMembers) {
-                Remove-LiquitDeviceCollectionMember -DeviceCollection $BroadLateCollection -Device $BroadLateMember
+                $CurrentDevice = Get-LiquitDevice -ID $BroadLateMember.ID
+                Remove-LiquitDeviceCollectionMember -DeviceCollection $BroadLateCollection -Device $CurrentDevice
             }
         }
         
@@ -172,13 +173,15 @@ ForEach ($UpdateGroup in $UpdateGroups){
         #Pull List of devices to Remove
         $DevicesToRemove = $BroadLastMembers | Where-Object {$_.Name -notin $GroupMembers.AdditionalProperties.displayName}
         ForEach ($DeviceToRemove in $DevicesToRemove) {
-            Remove-LiquitDeviceCollectionMember -DeviceCollection $BroadLastCollection -Device $DevicesToRemove
+            $CurrentDevice = Get-LiquitDevice -ID $DeviceToRemove.ID
+            Remove-LiquitDeviceCollectionMember -DeviceCollection $BroadLastCollection -Device $CurrentDevice
         }
 
         # If Entra Group is empty, clear out AW Collection
         If (!$GroupMembers) {
             ForEach ($BroadLastMember in $BroadLastMembers) {
-                Remove-LiquitDeviceCollectionMember -DeviceCollection $BroadLastCollection -Device $BroadLastMember
+                $CurrentDevice = Get-LiquitDevice -ID $BroadLastMember.ID
+                Remove-LiquitDeviceCollectionMember -DeviceCollection $BroadLastCollection -Device $CurrentDevice
             }
         }
         
