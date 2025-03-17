@@ -128,7 +128,7 @@ Set-Location "$($SiteCode):\"
 
 "@
 
-Function Sync-Collections {
+Function Sync-DeviceCollections {
 param(
     $CollectionsToSync
 )
@@ -178,6 +178,52 @@ param(
 Return
 }
 
+Function Sync-UserCollections {
+param(
+    $CollectionsToSync
+)
+
+    ForEach ($Collection in $CollectionsToSync){
+        Write-Host $Collection.Name
+        $CMCollectionMembers = Get-CMCollectionMember -CollectionName $($Collection.CollectionName)
+        $AWCollectionExist = Get-LiquitUserCollection -Name $Collection.CollectionName
+        If (!$AWCollectionExist) {
+            $NewAWCollection = New-LiquitUserCollection -Name $Collection.CollectionName
+            $CollectionID = $NewAWCollection.ID
+        } else {
+            $CollectionID = $AWCollectionExist.ID
+        }
+
+        ForEach ($CMCollectionMember in $CMCollectionMembers) {
+            $SplitUsername1 = $CMCollectionMember.Name -split ' '
+            $SplitUsernameFinal = $SplitUsername1[0] -split '\\'
+
+            $AWUsers = Get-LiquitUser -Search "$($SplitUsernameFinal[1])"
+            
+            $UsersToAssign = [System.Collections.ArrayList]::new()
+
+            ForEach ($User in $($AWUsers | Where-Object {$_.Name -eq $($SplitUsernameFinal[1]) -or $_.Name -like "$($SplitUsernameFinal[1])@*"})) {
+                $UserItems = New-Object PSObject -prop @{
+                    UserID = $User.ID
+                    UserName = $User.Name
+                    Email = $User.Mail
+                }
+                [void]$UsersToAssign.Add($UserItems)
+            }
+            $CurrentCollection = Get-LiquitUserCollection -ID $CollectionID
+            $CollectionMembership = Get-LiquitUserCollectionMembers -UserCollection $CurrentCollection
+
+            # Add Users to Collection
+            ForEach ($UserAssigned in $UsersToAssign) {
+                If ($UserAssigned.UserID -notin $CollectionMembership.ID) {
+                    $CurrentUser = Get-LiquitUser -ID $UserAssigned.UserID
+                    Add-LiquitUserCollectionMember -UserCollection $CurrentCollection -User $CurrentUser
+                }
+            }
+        }
+    }
+Return
+}
 
 Connect-LiquitWorkspace -URI $LiquitURI -Credential $credentials
 
@@ -214,9 +260,11 @@ $AllConfigMgrCollections = $Collections | Sort-Object -Property CollectionType,C
 
 # **********************************************************************************************************************
 If ($SyncOnly) {
-    $CollectionsToSync = $AllConfigMgrCollections | Where-Object { $_.CollectionExists -eq $true }
+    $DeviceCollections = $AllConfigMgrCollections | Where-Object { $_.CollectionExists -eq $true -and $_.CollectionType -eq 'Device Collection' }
+    $UserCollections = $AllConfigMgrCollections | Where-Object { $_.CollectionExists -eq $true -and $_.CollectionType -eq 'User Collection' }
 
-    Sync-Collections -CollectionsToSync $CollectionsToSync
+    Sync-DeviceCollections -CollectionsToSync $DeviceCollections
+    Sync-UserCollections -CollectionsToSync $UserCollections
 
     exit
 
@@ -270,12 +318,14 @@ $button.Add_Click({
             ForEach ( $Collection in $($AllConfigMgrCollections | Where-Object { $_.CollectionExists -eq $true})) {
                 $OrganizedCollections = New-Object PSObject -prop @{
                     CollectionName = $Collection.CollectionName
+                    CollectionType = $Collection.CollectionType
                 }
             [void]$CollectionsToSync.Add($OrganizedCollections)
             }
             ForEach ( $Collection in $($AllConfigMgrCollections | Where-Object { $_.CreateCollection -eq $true})) {
                 $OrganizedCollections = New-Object PSObject -prop @{
                     CollectionName = $Collection.CollectionName
+                    CollectionType = $Collection.CollectionType
                 }
             [void]$CollectionsToSync.Add($OrganizedCollections)
             }
@@ -283,12 +333,16 @@ $button.Add_Click({
             ForEach ( $Collection in $($AllConfigMgrCollections | Where-Object { $_.CreateCollection -eq $true})) {
                 $OrganizedCollections = New-Object PSObject -prop @{
                     CollectionName = $Collection.CollectionName
+                    CollectionType = $Collection.CollectionType
                 }
             [void]$CollectionsToSync.Add($OrganizedCollections)
             }
         }
-
-    Sync-Collections -CollectionsToSync $CollectionsToSync
+    $DeviceCollections = $CollectionsToSync | Where-Object {$_.CollectionType -eq 'Device Collection'}
+    $UserCollections = $CollectionsToSync | Where-Object {$_.CollectionType -eq 'User Collection'}
+    
+    Sync-DeviceCollections -CollectionsToSync $DeviceCollections
+    Sync-UserCollections -CollectionsToSync $UserCollections
 
     $XMLApplicationForm.Close()
 
