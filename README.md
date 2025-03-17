@@ -36,3 +36,7 @@ This script will attempt to import in applications and packages from ConfigMgr i
 ## Sync-MultipleEntraGroupsToAW.ps1
 
 This script uses an app registration and a secret key so that you can automate the process of syncing Entra Groups to Application Workspace Groups. You will need to specify the correct groups you want to sync to. I tried to document each action so that it makes sense... This will add if there are new objects and remove if any have been removed from the Entra AD groups. In this example, Entra is the source of truth...
+
+## Sync-ConfigMgrCollectionsToAWUserCollections.ps1
+
+This script will query ConfigMgr for all collections and give you the option to recreate them in AW as user collections. This will take the devices' primary user or last logged on user and add them to a User Collection in AW. It has an option to just sync the ones that you have already brought in so that you can just run it on a schedule and make sure to add any other devices' users down the road.
