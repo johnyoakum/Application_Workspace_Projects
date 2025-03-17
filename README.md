@@ -39,4 +39,4 @@ This script uses an app registration and a secret key so that you can automate t
 
 ## Sync-ConfigMgrCollectionsToAWUserCollections.ps1
 
-This script will query ConfigMgr for all collections and give you the option to recreate them in AW as user collections. This will take the devices' primary user or last logged on user and add them to a User Collection in AW. It has an option to just sync the ones that you have already brought in so that you can just run it on a schedule and make sure to add any other devices' users down the road.
+This script will query ConfigMgr for all collections and give you the option to recreate them in AW as user collections. This will take the devices' primary user or last logged on user and add them to a User Collection in AW. It has an option to just sync the ones that you have already brought in so that you can just run it on a schedule and make sure to add any other devices' users down the road. This is currently not working for User Groups, only Device Groups. I will work on that.
