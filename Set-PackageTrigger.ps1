@@ -1,7 +1,7 @@
 ﻿Import-Module Liquit.Server.PowerShell
-$LiquitURI = 'https://john.liquit.com' # Replace this with your zone
+$LiquitURI = 'https://zone.liquit.com' # Replace this with your zone
 $username = 'local\admin' # Replace this with a service account you have created for creating and accessing this information
-$password = 'IsaiahMaddux@2014' # Enter the password for that service Account
+$password = 'PASSWORD' # Enter the password for that service Account
 $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, (ConvertTo-SecureString -String $password -AsPlainText -Force)
 $UpdatePackageNames = 'Update Audacity'
 
