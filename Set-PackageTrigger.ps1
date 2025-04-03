@@ -1,4 +1,8 @@
-﻿Import-Module Liquit.Server.PowerShell
+if (-not (Get-Module -ListAvailable -Name Liquit.Server.PowerShell)) {
+    Install-Module -Name Liquit.Server.PowerShell -Scope CurrentUser -Force
+}
+ 
+ Import-Module Liquit.Server.PowerShell
 $LiquitURI = 'https://zone.liquit.com' # Replace this with your zone
 $username = 'local\admin' # Replace this with a service account you have created for creating and accessing this information
 $password = 'PASSWORD' # Enter the password for that service Account
