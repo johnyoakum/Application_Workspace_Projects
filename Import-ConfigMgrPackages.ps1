@@ -1,15 +1,14 @@
-﻿Add-Type -AssemblyName PresentationCore
+#﻿Add-Type -AssemblyName PresentationCore
 Add-Type -AssemblyName PresentationFramework
 
 # Check for powershell Module and install if necessary
 if (-not (Get-Module -ListAvailable -Name Liquit.Server.PowerShell)) {
     Install-Module -Name Liquit.Server.PowerShell -Scope CurrentUser -Force
 }
-
-# Import the ConfigurationManager.psd1 module 
-if((Get-Module ConfigurationManager) -eq $null) {
-    Import-Module "$($ENV:SMS_ADMIN_UI_PATH)\..\ConfigurationManager.psd1"
+if (-not (Get-Module -ListAvailable -Name Liquit.Server.PowerShell)) {
+    Install-Module -Name SQLServer -Scope CurrentUser -Force
 }
+
 $CMPSSuppressFastNotUsedCheck = $true
 $PublishingStage = 'Test' # Please enter the right location or leave blank for Development, these options can be 'Test, Acceptance, or Production'
 $LiquitConnectorPrefix = "win - " # Replace this with the connector prefix for your environment
@@ -18,20 +17,83 @@ $username = 'local\admin' # Replace this with a service account you have created
 $password = 'Isaiah@2014' # Enter the password for that service Account
 $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, (ConvertTo-SecureString -String $password -AsPlainText -Force)
 $SiteCode = "JY1" # Site code 
-$ProviderMachineName = "CM01.corp.viamonstra.com" # SMS Provider machine name
+$SiteServer = "CM01.corp.viamonstra.com" # SMS Provider machine name
 $AppDetails = [System.Collections.ArrayList]::new()
 
-# Connect to the site's drive if it is not already present
-if((Get-PSDrive -Name $SiteCode -PSProvider CMSite -ErrorAction SilentlyContinue) -eq $null) {
-    New-PSDrive -Name $SiteCode -PSProvider CMSite -Root $ProviderMachineName @initParams
-}
+$ApplicationQuery = @"
+WITH XMLNAMESPACES (
+    DEFAULT 'http://schemas.microsoft.com/SystemsCenterConfigurationManager/2009/07/10/DesiredConfiguration',
+    'http://schemas.microsoft.com/SystemsCenterConfigurationManager/2009/06/14/Rules' AS ns,
+    'http://schemas.microsoft.com/SystemCenterConfigurationManager/2009/AppMgmtDigest' AS p1
+)
+SELECT DISTINCT
+    app.DisplayName,
+    app.Manufacturer,
+    app.SoftwareVersion,
+    --cfg.SDMPackageDigest, -- This was commented out in your original query
+    
+    -- Get the primary file name (if any .msi, .bat, .exe, or .cmd file exists)
+    COALESCE(
+        cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:Contents/p1:Content/p1:File[contains(@Name, ".msi")]/@Name)[1]', 'nvarchar(max)'),
+        cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:Contents/p1:Content/p1:File[contains(@Name, ".bat")]/@Name)[1]', 'nvarchar(max)'),
+        cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:Contents/p1:Content/p1:File[contains(@Name, ".cmd")]/@Name)[1]', 'nvarchar(max)'),
+        cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:Contents/p1:Content/p1:File[contains(@Name, ".exe")]/@Name)[1]', 'nvarchar(max)')
+    ) AS [PrimaryFilename],
+    
+    -- Extract the DeploymentType
+    cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Technology)[1]', 'nvarchar(max)') AS [DeploymentType],
+    
+    -- Extract the DetectionMethod and EnhancedFolder/File (custom data)
+    cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:CustomData/p1:DetectionMethod)[1]', 'nvarchar(max)') AS [DetectionMethod],
+    cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:CustomData/p1:EnhancedDetectionMethod/p1:Settings/File/Path)[1]', 'nvarchar(max)') AS [EnhancedFolder],
+    cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:CustomData/p1:EnhancedDetectionMethod/p1:Settings/File/Filter)[1]', 'nvarchar(max)') AS [EnhancedFile],
+    cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:CustomData/p1:ProductCode)[1]', 'nvarchar(max)') AS [ProductCodeMSI],
+	cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:CustomData/p1:ProductVersion)[1]', 'nvarchar(max)') AS [Version],
+	cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:CustomData/p1:EnhancedDetectionMethod/p1:Settings/File/Path)[1]', 'nvarchar(max)') AS [FileDetectionPath],
+    cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:CustomData/p1:EnhancedDetectionMethod/p1:Settings/File/Filter)[1]', 'nvarchar(max)') AS [FileDetectionFile],
+	cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:CustomData/p1:EnhancedDetectionMethod/ns:Rule/ns:Expression/ns:Operator)[1]', 'nvarchar(max)') AS [FileDetectionOperator],
+	cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:CustomData/p1:EnhancedDetectionMethod/ns:Rule/ns:Expression/ns:Operands/ns:ConstantValue/@Value)[1]', 'nvarchar(max)') AS [FileDetectionVersion],
+	ico.Icon,
+    cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:Contents/p1:Content/p1:Location)[1]', 'nvarchar(max)') AS [Location],
+    cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:InstallAction/p1:Args/p1:Arg)[1]', 'nvarchar(max)') AS [InstallCommandLine],
+    cfg.SDMPackageDigest.value('(/p1:AppMgmtDigest/p1:DeploymentType/p1:Installer/p1:UninstallAction/p1:Args/p1:Arg)[1]', 'nvarchar(MAX)') AS [UninstallCommandLine]
+FROM v_Applications AS app
+JOIN v_ApplicationModelInfo AS info ON app.ModelName = info.SecuredKey
+JOIN v_ConfigurationItems AS cfg ON info.CI_ID = cfg.CI_ID
+JOIN v_CIRelation as ci on cfg.CI_ID = ci.ToCIID
+JOIN CI_LocalizedCIClientProperties as ico on ico.CI_ID = ci.FromCIID
 
-# Set the current location to be the site code.
-Set-Location "$($SiteCode):\"
+"@
 
-# Retrieve all applications from SCCM
-$Applications = Get-CMApplication  #| Where-Object { $_.LocalizedDisplayname -like "*audacity*"}
-$Packages = Get-CMPackage #| Where-Object {$_.Name -eq "7-Zip"}
+        $PackageQuery = @"
+select 
+	app.[PkgID]
+	,app.[Name]
+	,app.[Version]
+	,app.[Manufacturer]
+	,app.[Source]
+	,pro.[CommandLine]
+	,app.Icon
+FROM v_SmsPackage as app
+JOIN v_Program as pro on pro.PackageID = app.PkgID
+WHERE pro.ProgramName <> '*' and app.[Name] NOT LIKE '%User State%' and app.[Name] NOT LIKE '%Configuration Manager%'
+
+
+"@
+
+    Try {
+        $Applications = Invoke-Sqlcmd -ServerInstance "$SiteServer" -Database "cm_$SiteCode" -Query $ApplicationQuery -MaxBinaryLength 45000 -ErrorAction Stop -TrustServerCertificate -Verbose
+    } catch {
+        Write-Host "$_.Exception.Message"
+        #New-UDAlert -Severity 'error' -Text "$_.Exception.Message"
+    }
+    Try {
+        $Packages = Invoke-Sqlcmd -ServerInstance "$SiteServer" -Database "cm_$SiteCode" -Query $PackageQuery -MaxBinaryLength 45000 -ErrorAction Stop -TrustServerCertificate -Verbose
+    } catch {
+        Write-Host "$_.Exception.Message"
+        #New-UDAlert -Severity 'error' -Text "$_.Exception.Message"
+    }
+
 $AllApplications = [System.Collections.ArrayList]::new()
 $AllPackages = [System.Collections.ArrayList]::new()
 
@@ -101,26 +163,25 @@ Function Create-Package {
     )
     
     # Save the base64 icon as an ico file for use in AW
-    $icoregex = "^[A-Za-z0-9+/]*={0,2}$"
-    if ($app.Icon -replace "\s","" -match $icoregex -and (($app.Icon.Length % 4) -eq 0)) {
-        $appIcon = [convert]::FromBase64String($($App.Icon))
+    $appIcon = $($app).Icon
+
+    if ($appIcon) {
         [System.IO.File]::WriteAllBytes("$path\icon.ico", $appIcon) | Out-Null
         $iconPath = "$path\icon.ico"
         $iconContent = New-LiquitContent -Path $iconPath
     } else {
-        Write-Host "Icon is not in base64"
+        Write-Host "Icon is not in right format or is null."
         $iconContent = $null
     }
     
-    $AWPackage = New-LiquitPackage -Name "CM - $($App.NameOfApplication)" -Type "Launch" `
-                -DisplayName $app.NameOfApplication -Priority 100 -Enabled $true `
-                -Offline $true -Web $false -Icon $iconContent
+    $AWPackage = New-LiquitPackage -Name "CM - $($App.NameOfApplication)" -Type "Launch" -DisplayName "$($app.NameOfApplication)" -Priority 100 -Enabled $true -Offline $true -Web $false -Icon $iconContent
+    
     If ($app.Version) {
 
-        $AWSnapshot = New-LiquitPackageSnapshot -Package $AWPackage -Name "$($app.Version)"
+        $AWSnapshot = New-LiquitPackageSnapshot -Package $AWPackage -Name "version $($app.Version)"
 
     } elseif ($app.FileDetectionVersion) {
-        $AWSnapshot = New-LiquitPackageSnapshot -Package $AWPackage -Name "$($app.FileDetectionVersion)"
+        $AWSnapshot = New-LiquitPackageSnapshot -Package $AWPackage -Name "version $($app.FileDetectionVersion)"
     } else {
         $AWSnapshot = New-LiquitPackageSnapshot -Package $AWPackage -Name "VERSION 1"
     }
@@ -244,60 +305,60 @@ $StartingForm.Topmost = $true
 
 $StartingForm.Show()
 
-# Get all APPLICATIONS from ConfigMgr
 ForEach ($Application in $Applications) {
-    # Parse the xml and populate some variables
-    [xml]$xml = $Application.SDMPackageXML
-    $App = New-Object PSObject -prop @{
-        DeploymentType = $xml.AppMgmtDigest.DeploymentType.Technology
-        PathToFiles = $xml.AppMgmtDigest.DeploymentType.Installer.Contents.Content.Location
-        DetectionMethod = $xml.AppMgmtDigest.DeploymentType.Installer.CustomData.DetectionMethod
-        EnhancedFolder = $xml.AppMgmtDigest.DeploymentType.Installer.CustomData.EnhancedDetectionMethod.Settings.File.Path
-        EnhancedFile = $xml.AppMgmtDigest.DeploymentType.Installer.CustomData.EnhancedDetectionMethod.Settings.File.Filter
-        ProductCodeMSI = $xml.AppMgmtDigest.DeploymentType.Installer.CustomData.ProductCode
-        InstallCommand = $xml.AppMgmtDigest.DeploymentType.Installer.CustomData.InstallCommandLine
-        UninstallCommand = $xml.AppMgmtDigest.DeploymentType.Installer.CustomData.UninstallCommandLine
-        NameOfApplication = $xml.AppMgmtDigest.Application.DisplayInfo.Info.Title
-        Version = $xml.AppMgmtDigest.DeploymentType.Installer.CustomData.ProductVersion
-        DisplayVersion = $xml.AppMgmtDigest.Application.DisplayInfo.Info.Version
-        Publisher = $xml.AppMgmtDigest.Application.DisplayInfo.Info.Publisher
-        FileDetectionPath = $xml.AppMgmtDigest.DeploymentType.Installer.CustomData.EnhancedDetectionMethod.Settings.File.Path
-        FileDetectionFile = $xml.AppMgmtDigest.DeploymentType.Installer.CustomData.EnhancedDetectionMethod.Settings.File.Filter
-        FileDetectionOperator = $xml.AppMgmtDigest.DeploymentType.Installer.CustomData.EnhancedDetectionMethod.Rule.Expression.Operator
-        FileDetectionVersion = $xml.AppMgmtDigest.DeploymentType.Installer.CustomData.EnhancedDetectionMethod.Rule.Expression.Operands.ConstantValue.Value
-        Icon = $xml.AppMgmtDigest.Resources.Icon.Data
-        Type = "Application"
-        CreateApp = $false
-    }
-    [void]$AllApplications.Add($App)
-}
+            # Parse the xml and populate some variables
+            [xml]$xml = $Application.SDMPackageXML
+            $App = New-Object PSObject -prop @{
+                DeploymentType = $($Application.DeploymentType)
+                InstallerFile = $($Application.PrimaryFilename)
+                PathToFiles = $($Application.Location)
+                DetectionMethod = $($Application.DetectionMethod)
+                EnhancedFolder = $($Application.EnhancedFolder)
+                EnhancedFile = $($Application.EnhancedFile)
+                ProductCodeMSI = $($Application.ProductCodeMSI)
+                InstallCommand = $($Application.InstallCommandLine)
+                UninstallCommand = $($Application.UninstallCommandLine)
+                NameOfApplication = $($Application.DisplayName)
+                Version = $($Application.Version)
+                DisplayVersion = $($Application.SoftwareVersion)
+                Publisher = $($Application.Manufacturer)
+                FileDetectionPath = $($Application.FileDectionPath)
+                FileDetectionFile = $($Application.FileDetectionFile)
+                FileDetectionOperator = $($Application.FileDetectionOperator)
+                FileDetectionVersion = $($Application.FileDetectionVersion)
+                Icon = $($Application.icon)
+                Type = "Application"
+                CreateApp = $false
+            }
+            [void]$AllApplications.Add($App)
+        }
 
-# Get all PACKAGES from ConfigMgr
-ForEach ($Package in $Packages) {
-    $Program = $package | Get-CMProgram
-    $App = New-Object PSObject -prop @{
-        DeploymentType = "N/A"
-        PathToFiles = $Package.PkgSourcePath
-        DetectionMethod = "N/A"
-        EnhancedFolder = "N/A"
-        EnhancedFile = "N/A"
-        ProductCodeMSI = "N/A"
-        InstallCommand = $Program.CommandLine
-        UninstallCommand = "N/A"
-        NameOfApplication = $Package.Name
-        Version = $Package.Version
-        DisplayVersion = $Package.Version
-        Publisher = $Package.Manufacturer
-        FileDetectionPath = "N/A"
-        FileDetectionFile = "N/A"
-        FileDetectionOperator = "N/A"
-        FileDetectionVersion = "N/A"
-        Icon = $Package.Icon
-        Type = "Package"
-        CreateApp = $false
-    }
-    [void]$AllApplications.Add($App)
-}
+        # Get all PACKAGES from ConfigMgr
+        ForEach ($Package in $Packages) {
+            $App = New-Object PSObject -prop @{
+                DeploymentType = "N/A"
+                InstallerFile = $($Package.CommandLine.Split(' ')[0])
+                PathToFiles = $Package.Source
+                DetectionMethod = "N/A"
+                EnhancedFolder = "N/A"
+                EnhancedFile = "N/A"
+                ProductCodeMSI = "N/A"
+                InstallCommand = $Package.CommandLine
+                UninstallCommand = "N/A"
+                NameOfApplication = $Package.Name
+                Version = $Package.Version
+                DisplayVersion = $Package.Version
+                Publisher = $Package.Manufacturer
+                FileDetectionPath = "N/A"
+                FileDetectionFile = "N/A"
+                FileDetectionOperator = "N/A"
+                FileDetectionVersion = "N/A"
+                Icon = $($Package.icon)
+                Type = "Package"
+                CreateApp = $false
+            }
+            [void]$AllApplications.Add($App)
+        }
 
 # So now that I have all the information that I need to create the AW Packages, time to create the GUI that displays the possibilities and then allows them to choose what they want to import.
 
@@ -316,12 +377,13 @@ $MainImage.Source = $bannerImage
 $Title.Icon = $iconImage
 $ListView.ItemsSource = $SortedApplications
 
+$Script:SelectedApplications = @()
 
 # Define event handlers
 $button.Add_Click({
     Connect-LiquitWorkspace -URI $LiquitURI -Credential $credentials
     # Do something with the Selected Apps
-        
+        $Script:SelectedApplications = $($AllApplications | Where-Object { $_.CreateApp -eq $true})
         ForEach ( $App in $($AllApplications | Where-Object { $_.CreateApp -eq $true})) {
             # Commands to import applications
             Create-Package -App $app
