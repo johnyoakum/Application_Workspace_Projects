@@ -55,9 +55,9 @@ if ($CreateDesktopIcons -or $CreateStartMenuIcons) {
 }
 
 #region Variables
-$LiquitURL = 'https://john.liquit.com'
+$LiquitURL = 'https://zone.liquit.com'
 $Username = 'LOCAL\Admin'
-$Password = 'IsaiahMaddux@2014'
+$Password = 'PASSWORD'
 $TakeOverPackageName = 'Take Over Applications'
 
 #endregion
