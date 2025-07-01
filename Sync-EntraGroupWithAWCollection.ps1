@@ -1,13 +1,16 @@
-﻿if (-not (Get-Module -ListAvailable -Name Microsoft.Graph)) {
+#region CheckModules
+$MSGraph = Get-Module -ListAvailable -Name Microsoft.Graph
+If (!$MSGraph) {
     Install-Module -Name Microsoft.Graph -Scope CurrentUser -Force
 }
-if (-not (Get-Module -ListAvailable -Name Liquit.Server.PowerShell)) {
+$LiquitPS = Get-Module -ListAvailable -Name Liquit.Server.PowerShell
+If (!$LiquitPS) {
     Install-Module -Name Liquit.Server.PowerShell -Scope CurrentUser -Force
 }
-
+#endregion Check Modules
 # Variables
-$GroupName = "YOUR GROUP NAME"
-$LiquitURI = 'https://YOURZONE.liquit.com' # Replace this with your zone
+$GroupName = "Devices For Testing"
+$LiquitURI = 'https://liquit.corp.viamonstra.com' # Replace this with your zone
 $username = 'local\YOURACCOUNT' # Replace this with a service account you have created for creating and accessing this information
 $password = 'YOURPASSWORD' # Enter the password for that service Account
 $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, (ConvertTo-SecureString -String $password -AsPlainText -Force)
@@ -50,11 +53,14 @@ If ($GroupExists -eq $null) {
     $CollectionMembers = Get-LiquitDeviceCollectionMember -DeviceCollection $GroupExists
 }
 
+$GroupExists = Get-LiquitDeviceCollection | Where-Object {$_.Name -eq $GroupName}
+
 # Check to remove any members
 If ($CollectionMembers -ne $null) {
     ForEach ($CollectionMember in $CollectionMembers) {
-        If ($CollectionMember -notin $MatchingDevices) {
-            Remove-LiquitDeviceCollectionMember -DeviceCollection $GroupExists -Device $CollectionMember
+        If ($($CollectionMember.Name) -notin $($MatchingDevices.Name)) {
+                Write-Host "This is still running, when it shouldn't be"
+                Remove-LiquitDeviceCollectionMember -DeviceCollection $GroupExists -Device $CollectionMember
         }
     }
 }
@@ -62,8 +68,10 @@ If ($CollectionMembers -ne $null) {
 # Add any new devices
 If ($CollectionMembers) {
     ForEach ($MatchingDevice in $MatchingDevices) {
-        If ($MatchingDevice -notin $CollectionMembers) {
-            Add-LiquitDeviceCollectionMember -DeviceCollection $GroupExists -Device $MatchingDevice
+        If ($($MatchingDevice.Name) -notin $($CollectionMembers.Name)) {
+            Try {
+                Add-LiquitDeviceCollectionMember -DeviceCollection $GroupExists -Device $MatchingDevice
+            } catch {}
         }
     }
 } else {
