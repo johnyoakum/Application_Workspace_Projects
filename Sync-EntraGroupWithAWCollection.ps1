@@ -60,7 +60,8 @@ If ($CollectionMembers -ne $null) {
     ForEach ($CollectionMember in $CollectionMembers) {
         If ($($CollectionMember.Name) -notin $($MatchingDevices.Name)) {
                 Write-Host "This is still running, when it shouldn't be"
-                Remove-LiquitDeviceCollectionMember -DeviceCollection $GroupExists -Device $CollectionMember
+                $Device = Get-LiquitDevice -Name $CollectionMember.Name
+                Remove-LiquitDeviceCollectionMember -DeviceCollection $GroupExists -Device $Device
         }
     }
 }
