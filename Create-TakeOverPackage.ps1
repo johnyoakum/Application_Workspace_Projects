@@ -1,4 +1,4 @@
-﻿<#
+<#
     .SYNOPSIS
     Creates a package that could take over and perform initial updates of applications on machines
 
@@ -29,11 +29,11 @@
     .\Create-TakeOverPackage.ps1 -CreateCollections -CreateEntitlements -CreateDesktopIcons -CreateStartMenuIcons
 
     .NOTES
-    Version:        1.0
-    Author:         John Yoakum, Recast Software
-    Creation Date:  05/05/2025
+    Version:       1.1
+    Author:        John Yoakum, Recast Software
+    Creation Date: 05/05/2025
     Purpose/Change: Initial script development
-
+    Change: 07/31/2025 - Modified logic to iterate through all launch actions and skip system files (e.g., cmd.exe)
 #>
 param (
     [switch]$AddUnmanged = $false,
@@ -55,14 +55,12 @@ if ($CreateDesktopIcons -or $CreateStartMenuIcons) {
 }
 
 #region Variables
-$LiquitURL = 'https://zone.liquit.com'
+$LiquitURL = 'https://john.liquit.com'
 $Username = 'LOCAL\Admin'
-$Password = 'PASSWORD'
+$Password = 'IsaiahMaddux@2014'
 $TakeOverPackageName = 'Take Over Applications'
 
 #endregion
-
-
 
 $TakeOverCommands = [System.Collections.ArrayList]::new()
 $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, (ConvertTo-SecureString -String $password -AsPlainText -Force)
@@ -71,24 +69,76 @@ Connect-LiquitWorkspace -URI 'https://john.liquit.com' -Credential $credentials
 
 # Create my listing of all my packages with my new detection
 $AllPackages = Get-LiquitPackage #-Name "win - 1Password 8"
+
 ForEach ($Package in $AllPackages) {
+    Write-Host $($Package | Out-String)
     $Attribute = Get-LiquitAttribute -Entity $Package
     If ($Attribute) {$Managed = $true} else {$Managed = $false}
     $Snapshot = Get-LiquitPackageSnapshot -Package $Package | Where-Object {$_.Type -eq 'Production'}
+    Write-Host $($Snapshot | Out-String)
+    # If a production snapshot exists, proceed
     If ($Snapshot) {
-        $Actionset = Get-LiquitActionSet -Snapshot $Snapshot | Where-Object {$_.Type -eq 'Launch'} | Select-Object -First 1
-        If ($Actionset) {
+        # Get all 'Launch' action sets for the package
+        $Actionsets = Get-LiquitActionSet -Snapshot $Snapshot | Where-Object {$_.Type -eq 'Launch'}
+        Write-Host $($Snapshot | Out-String)
+        # Initialize a flag to track if a valid action has been found for this package
+        $validActionFound = $false
+
+        # Loop through each 'Launch' action set
+        ForEach ($Actionset in $Actionsets) {
+            Write-Host "Current ActionSet"
+            Write-Host $($Actionset | Out-String)
+            # Get all 'processstart' actions within the current action set
             $Actions = Get-LiquitAction -ActionSet $Actionset | Where-Object {$_.Type -eq 'processstart'}
+            Write-Host "Getting Actions"
+            Write-Host $($Actions | Out-String)
             If ($Actions) {
-                $NewPackage = New-Object PSObject -Property @{
-                    PackageID = $Package.ID
-                    PackageName = $Package.Name
-                    DisplayName = If ($Package.DisplayName) {$Package.DisplayName} else {$Package.Name}
-                    PathToFile = $Actions.Settings.directory
-                    FileName = $Actions.Settings.name
-                    Managed = $Managed
+               
+                # Loop through each 'processstart' action
+                ForEach ($Action in $Actions) {
+                    Write-Host "Got Action"
+                    Write-Host $($Action | Out-String)
+                    $filePath = Join-Path -Path $Action.Settings.directory -ChildPath $Action.Settings.name
+                    $isSystemFile = $false
+
+                    # Check for common system paths
+                    $systemPaths = @(
+                        "$env:SystemRoot\System32",
+                        "$env:SystemRoot\SysWOW64",
+                        "$env:SystemRoot",
+                        "$env:ProgramFiles",
+                        "$env:ProgramFiles(x86)"
+                    )
+                    
+                    # Check if the file path starts with any of the system paths
+                    foreach ($path in $systemPaths) {
+                        if ($filePath.ToLower().StartsWith($path.ToLower())) {
+                            Write-Host "Skipping action '$($Action.Name)' for package '$($Package.Name)' because it points to a system file: $filePath"
+                            $isSystemFile = $true
+                            break # Exit the inner loop once a match is found
+                        }
+                    }
+
+                    # If it's not a system file, add it to your list and break out of the action set loops
+                    if (-not $isSystemFile) {
+                        $NewPackage = [PSCustomObject]@{
+                            PackageID = $Package.ID
+                            PackageName = $Package.Name
+                            DisplayName = If ($Package.DisplayName) {$Package.DisplayName} else {$Package.Name}
+                            PathToFile = $Action.Settings.directory
+                            FileName = $Action.Settings.name
+                            Managed = $Managed
+                        }
+                        [void]$TakeOverCommands.Add($NewPackage)
+                        $validActionFound = $true
+                        break # Exit the action loop
+                    }
                 }
-                [void]$TakeOverCommands.Add($NewPackage)
+            }
+
+            # If a valid action was found, break out of the action set loop as well
+            if ($validActionFound) {
+                break
             }
         }
     }
