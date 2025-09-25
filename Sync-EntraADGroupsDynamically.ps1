@@ -9,6 +9,17 @@
   This will also save the previously selected groups to a json file so that on subsequent runs, which you
   can bypass the GUI.
 
+  This will need an app registration in Azure with the following api Application Permissions:
+  	Directory.Read.All
+	GroupMember.Read.All
+	Group.Read.All
+	Device.Read.All
+  You will also need the Application ID, Tenant ID, and client secret
+  
+  You will need to change the lines below to reflect these values.
+
+  You will also need to change the lines below that point to your zone including service account and password to run the script.
+  
 .PARAMETER UseSaved
   Switch - when provided the script will skip the UI and act on groups listed in SavedGroupsFile.
 
@@ -267,4 +278,5 @@ $cancelBtn.Add_Click({ $window.Close() })
 
 # Show the UI
 $window.ShowDialog() | Out-Null
+
 
