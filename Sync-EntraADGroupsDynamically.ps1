@@ -25,16 +25,16 @@ param(
 )
 
 # Enter your App Registration Information
-$TenantId = 'd37cd50c-80c6-4fd2-9be2-6b24ff526332'
-$ClientId = "f779d59e-d3d9-4867-b686-8bc7294ff5aa"
-$ClientSecret = "HmZ8Q~gyVIGznH6_faMWZ_HJ8LRfmJ_W.Ki52cRy"
+$TenantId = 'tenantID'
+$ClientId = "ApplicationID"
+$ClientSecret = "CLIENTSecret"
 $secureSecret = ConvertTo-SecureString $clientSecret -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ($clientId, $secureSecret)
 
 # Enter your Liquit Acess Information
-$LiquitURI = 'https://john.liquit.com' # Replace this with your zone
-$username = 'local\admin'          # Replace this with a service account you have created for creating and accessing this information
-$password = 'IsaiahMaddux@2014'        # Enter the password for that service Account
+$LiquitURI = 'https://zone.fqdn.com' # Replace this with your zone
+$username = 'local\SERVICEACCOUNT'          # Replace this with a service account you have created for creating and accessing this information
+$password = 'SERVICEACCOUNTPASSWORD'        # Enter the password for that service Account
 $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, (ConvertTo-SecureString -String $password -AsPlainText -Force)
 
 
@@ -267,3 +267,4 @@ $cancelBtn.Add_Click({ $window.Close() })
 
 # Show the UI
 $window.ShowDialog() | Out-Null
+
