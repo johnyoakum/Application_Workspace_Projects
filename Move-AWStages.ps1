@@ -26,7 +26,7 @@ ForEach ($Package in $AllPackages){
             PackageID = $Package.ID
             PackageName = $Package.Name
             PackageVersion = $EventData.Details.data.name
-            SnapshotID = $TestPackageSnapshot.ID
+            SnapshotID = $TestPackageSnapshot.ID.Guid
             DateOfStage = $EventData.CreatedAt
             SnapshotStage = 'Test'
         }
@@ -38,7 +38,7 @@ ForEach ($Package in $AllPackages){
             PackageID = $Package.ID
             PackageName = $Package.Name
             PackageVersion = $EventData.Details.data.name
-            SnapshotID = $AcceptancePackageSnapshot.ID
+            SnapshotID = $AcceptancePackageSnapshot.ID.Guid
             DateOfStage = $EventData.CreatedAt
             SnapshotStage = 'Acceptance'
         }
@@ -75,3 +75,4 @@ If (!$Debug) {
 
     }
 }
+
