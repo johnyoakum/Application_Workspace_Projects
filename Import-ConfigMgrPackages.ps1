@@ -1,3 +1,37 @@
+<#
+.SYNOPSIS
+    Script to automate creating packages in Application Workspace
+
+.PRE-REQUISITES
+    -Service Account (or user account) in Application Workspace to perform actions. This Service account needs the following permissions:
+        1.	API Access
+        3.	Create Packages
+        4.	View Packages
+        5.	Modify Packages
+        7.	Upload Content (all)
+
+.DESCRIPTION
+    This script can perform dual functions, it can either read your currently installed software directly from your configMgr database
+        or you can supply it a csv file formatted as "Publisher0, DisplayName0, Version0" with those being the header rows.
+    It will then normalize the application names and search your Application Workspace for potential matches.
+    It will then present you a GUI that you can then choose which applications you want to have it create for you.
+    You will need to replace out the values listed below.
+        PublishingStage - Specify which stage you'd like to publish these applications to
+        SiteServer -  Fill in the SQL server for your ConfigMgr Environment
+        SiteCode - Enter the site code for your ConfigMgr Site
+        LiquitURI - This is the fqdn of your zone for Application Workspace
+        Username - This is the username of the account that we would create to perform these functions
+        Password - This is the password for the above user account
+        AppPrefix - Enter the prefix you will want for when it creates packages in AW
+
+
+.EXAMPLE
+    .\Create-AWAppsFromConfigMgrOrCSV.ps1 
+    
+    or 
+
+    .\Create-AWAppsFromConfigMgrOrCSV.ps1 -CSV "PATH TO CSV"
+#>
 #﻿Add-Type -AssemblyName PresentationCore
 Add-Type -AssemblyName PresentationFramework
 
@@ -18,6 +52,7 @@ $password = 'Isaiah@2014' # Enter the password for that service Account
 $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, (ConvertTo-SecureString -String $password -AsPlainText -Force)
 $SiteCode = "JY1" # Site code 
 $SiteServer = "CM01.corp.viamonstra.com" # SMS Provider machine name
+$AppPrefix = "CM - "
 $AppDetails = [System.Collections.ArrayList]::new()
 
 $ApplicationQuery = @"
@@ -174,7 +209,7 @@ Function Create-Package {
         $iconContent = $null
     }
     
-    $AWPackage = New-LiquitPackage -Name "CM - $($App.NameOfApplication)" -Type "Launch" -DisplayName "$($app.NameOfApplication)" -Priority 100 -Enabled $true -Offline $true -Web $false -Icon $iconContent
+    $AWPackage = New-LiquitPackage -Name "$($AppPrefix)$($App.NameOfApplication)" -Type "Launch" -DisplayName "$($app.NameOfApplication)" -Priority 100 -Enabled $true -Offline $true -Web $false -Icon $iconContent
     
     If ($app.Version) {
 
