@@ -16,13 +16,12 @@
     It will then normalize the application names and search your Application Workspace for potential matches.
     It will then present you a GUI that you can then choose which applications you want to have it create for you.
     You will need to replace out the values listed below.
-        PublishingStage - Specify which stage you'd like to publish these applications to
-        SiteServer -  Fill in the SQL server for your ConfigMgr Environment
-        SiteCode - Enter the site code for your ConfigMgr Site
+        CMSQLServer -  Fill in the SQL server for your ConfigMgr Environment
+        CMDB - Fill in the database name for your ConfigMgr SQL environment
+        LiquitConnectorPrefix - This is the prefix that you set up when you added in the connector to the Liquit Setup Store
         LiquitURI - This is the fqdn of your zone for Application Workspace
         Username - This is the username of the account that we would create to perform these functions
         Password - This is the password for the above user account
-        AppPrefix - Enter the prefix you will want for when it creates packages in AW
 
 
 .EXAMPLE
@@ -52,7 +51,6 @@ $password = 'Isaiah@2014' # Enter the password for that service Account
 $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, (ConvertTo-SecureString -String $password -AsPlainText -Force)
 $SiteCode = "JY1" # Site code 
 $SiteServer = "CM01.corp.viamonstra.com" # SMS Provider machine name
-$AppPrefix = "CM - "
 $AppDetails = [System.Collections.ArrayList]::new()
 
 $ApplicationQuery = @"
@@ -197,19 +195,50 @@ Function Create-Package {
         $App
     )
     
+    $PackageExist = Get-LiquitPackage -Name "CM - $($App.NameOfApplication)"
+    If ($PackageExist) {
+        Write-Host "CM - $($App.NameOfApplication) already exists, skipping package"
+        Return
+    }
+
     # Save the base64 icon as an ico file for use in AW
     $appIcon = $($app).Icon
 
-    if ($appIcon) {
-        [System.IO.File]::WriteAllBytes("$path\icon.ico", $appIcon) | Out-Null
-        $iconPath = "$path\icon.ico"
-        $iconContent = New-LiquitContent -Path $iconPath
-    } else {
-        Write-Host "Icon is not in right format or is null."
+    if ($null -ne $appIcon -and -not ($appIcon -is [System.DBNull])) {
+        if ($appIcon -is [byte[]] -and $appIcon.Length -gt 0) {
+            [System.IO.File]::WriteAllBytes("$path\icon.ico", $appIcon) | Out-Null
+            $iconPath = "$path\icon.ico"
+            $iconContent = New-LiquitContent -Path $iconPath
+        }
+        elseif ($appIcon -is [string] -and $appIcon.Trim().Length -gt 0) {
+            # if SQL returned a base64 string of the bytes, convert it
+            try {
+                $bytes = [Convert]::FromBase64String($appIcon)
+                if ($bytes.Length -gt 0) {
+                    [System.IO.File]::WriteAllBytes("$path\icon.ico", $bytes) | Out-Null
+                    $iconPath = "$path\icon.ico"
+                    $iconContent = New-LiquitContent -Path $iconPath
+                } else {
+                    Write-Host "Icon string decoded to empty byte array."
+                    $iconContent = $null
+                }
+            } catch {
+                Write-Host "Failed to decode icon string as base64: $($_.Exception.Message)"
+                $iconContent = $null
+            }
+        }
+        else {
+            Write-Host "Icon is present but not in a supported type."
+            $iconContent = $null
+        }
+    }
+    else {
+        Write-Host "Icon is null or DBNull."
         $iconContent = $null
     }
-    
-    $AWPackage = New-LiquitPackage -Name "$($AppPrefix)$($App.NameOfApplication)" -Type "Launch" -DisplayName "$($app.NameOfApplication)" -Priority 100 -Enabled $true -Offline $true -Web $false -Icon $iconContent
+
+
+    $AWPackage = New-LiquitPackage -Name "CM - $($App.NameOfApplication)" -Type "Launch" -DisplayName "$($app.NameOfApplication)" -Priority 100 -Enabled $true -Offline $true -Web $false -Icon $iconContent
     
     If ($app.Version) {
 
