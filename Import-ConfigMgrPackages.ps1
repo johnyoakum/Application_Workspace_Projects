@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Script to automate creating packages in Application Workspace
 
@@ -252,16 +252,65 @@ Function Create-Package {
 
     $actionset_install = New-LiquitActionSet -Snapshot $AWSnapshot -Type Install -Name 'Install' -Enabled $true -Frequency OncePerDevice -Process Sequential
 
-    $zipFileName = Split-Path $($app.PathToFiles) -Leaf
+    # New logic to import apps with source files larger than 3.5GB *******************************************
     
-    # Need to add some logic here to check for number of files and create a set for each file/folder. If I just use the uploaded directory this should work easier.
-    $actionset_install_action1 = New-LiquitAction -ActionSet $actionset_install `
-                        -Name 'Copy files to local machine' -type 'contentextract' `
-                        -Enabled $true -IgnoreErrors $false -Settings @{content = "$($zipFileName).zip"; destination = '${PackageTempDir}';}
-    $content_action1 = New-LiquitContent -path $app.PathToFiles
-    $attribute_action1 = New-LiquitAttribute -Entity $actionset_install_action1 -Link $content_action1 -ID 'content' -Setting @{filename = "$($zipFileName).zip"}
+    $sourceFolder = $($app.PathToFiles)
+    $outputFolder = "C:\Output"
+    $maxSize = 3.5GB
 
-    # Add in action to install product
+    if (!(Test-Path $outputFolder)) {
+        New-Item -ItemType Directory -Path $outputFolder | Out-Null
+    }
+
+    $zipIndex = 1
+    $currentZip = Join-Path $outputFolder ("Archive_{0:000}.zip" -f $zipIndex)
+    $currentFiles = @()
+    $totalSize = 0
+
+    # Gather files while preserving folder structure
+    $files = Get-ChildItem -Recurse -File $sourceFolder
+
+    foreach ($file in $files) {
+
+        $fileSize = $file.Length
+
+        # If adding this file would exceed the max size → start a new zip
+        if ($totalSize + $fileSize -gt $maxSize) {
+            Compress-Archive -Path $currentFiles -DestinationPath $currentZip -Update
+            #Write-Host "Created: $currentZip"
+        
+            $zipIndex++
+            $currentZip = Join-Path $outputFolder ("Archive_{0:000}.zip" -f $zipIndex)
+            $currentFiles = @()
+            $totalSize = 0
+        }
+
+        $currentFiles += $file.FullName
+        $totalSize += $fileSize
+    }
+
+    # Final ZIP
+    if ($currentFiles.Count -gt 0) {
+        Compress-Archive -Path $currentFiles -DestinationPath $currentZip -Update
+        #Write-Host "Created: $currentZip"
+    }
+
+    $AllFiles = Get-ChildItem -Recurse -File $outputFolder
+
+    ForEach ($file in $AllFiles) {
+        $PathToFile = Join-Path $outputFolder $file.Name
+        $actionset_install_action1 = New-LiquitAction -ActionSet $actionset_install `
+                        -Name 'Copy $($file.Name) to local machine' -type 'contentextract' `
+                        -Enabled $true -IgnoreErrors $false -Settings @{content = "$($file.Name)"; destination = '${PackageTempDir}';}
+        $content_action1 = New-LiquitContent -path $PathToFile
+        $attribute_action1 = New-LiquitAttribute -Entity $actionset_install_action1 -Link $content_action1 -ID 'content' -Setting @{filename = "$($file.Name)"}
+
+    }
+    
+    # Clean up all the zip files created
+    Remove-Item -Path $outputFolder -Recurse -Force
+
+      # Add in action to install product
     # Use regex to split up the values and apply them as name and parameters
     # **********************************************************************************************************************
     $StartingCommand = Get-StartingCommand -CommandLine $app.InstallCommand
@@ -280,21 +329,28 @@ Function Create-Package {
     If ($app.UninstallCommand -ne 'N/A') {
     $actionset_uninstall = New-LiquitActionSet -Snapshot $AWSnapshot -Type Uninstall -Name 'Uninstall' -Enabled $true -Frequency Always -Process Sequential
     
-    # Perform the Uninstal
+
+    # Perform the Uninstall
+    <# Removed the files that are being copied down for now as if there are multiple zip files, this won't work.
+
     $actionset_uninstall_action1 = New-LiquitAction -ActionSet $actionset_uninstall `
                         -Name 'Copy files to local machine' -type 'contentextract' `
                         -Enabled $true -IgnoreErrors $false -Settings @{content = "$($zipFileName).zip"; destination = '${PackageTempDir}';}
     $attribute_action1 = New-LiquitAttribute -Entity $actionset_uninstall_action1 -Link $content_action1 -ID 'content' -Setting @{filename = "$($zipFileName).zip"}
-       
+     #>
+
     $StartingCommand = Get-StartingCommand -CommandLine $app.UninstallCommand
     $FinalCommandArgs = Get-CommandLineParameters -CommandLine $app.UninstallCommand
     $actionset_uninstall_action2 = New-LiquitAction -ActionSet $actionset_uninstall `
                     -Name 'Start Uninstall' -type 'processstart' `
                     -Enabled $true -IgnoreErrors $false -Context Device -Settings @{name = '${PackageTempDir}\' + $StartingCommand; parameters = "$FinalCommandArgs"; wait = $true; directory = '${PackageTempDir}'}
-
+    
+    <#
     $actionset_uninstall_action3 = New-LiquitAction -ActionSet $actionset_uninstall `
                     -Name 'Remove Temporary Directory' -type 'dirdelete' `
                     -Enabled $true -IgnoreErrors $false -Settings @{path = '${PackageTempDir}'}
+    #>
+
     }
 
     If ($PublishingStage -ne $null) {
