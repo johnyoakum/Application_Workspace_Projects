@@ -1,7 +1,10 @@
 ﻿param (
   [String]$storageAccountName = "madduxliquit" ,           # Storage Account Name
   [String]$containerName = "liquit" ,                          # Blob Container Name
-  [String]$url = "https://download.liquit.com/extra/Bootstrapper/AgentBootstrapper-Win-2.1.0.2.exe"
+  [String]$url = "https://download.liquit.com/extra/Bootstrapper/AgentBootstrapper-Win-2.1.0.2.exe",
+  [switch]$StartDeployment = $true,
+  [string]$logPath = "C:\Windows\Temp",
+  [switch]$UseCertificate = $true
 )
 
 #https://madduxliquit.blob.core.windows.net/liquit/agent.json
@@ -16,7 +19,11 @@ $blobFiles = @(
 )
 $DestinationPath = "C:\InstallFiles"               # Target path in the AIB VM
 $InstallerPath = "C:\InstallFiles\AgentBootstrapper.exe"
-$InstallerArguments = "/certificate=C:\InstallFiles\AgentRegistration.cer /startDeployment /waitForDeployment /logPath=C:\Windows\Temp"
+
+If ($StartDeployment) {$InstallerArguments += " /startDeployment /waitForDeployment"}
+If ($logPath) {$InstallerArguments += " /logPath=$($logPath)"
+If ($UseCertificate) {$InstallerArguments += " /certificate=C:\InstallFiles\AgentRegistration.cer"}
+#$InstallerArguments = "/certificate=C:\InstallFiles\AgentRegistration.cer /startDeployment /waitForDeployment /logPath=$($logPath)"
 
 
 #######################################
