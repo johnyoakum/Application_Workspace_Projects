@@ -4,6 +4,7 @@
 
     .DESCRIPTION
     This script can be used as a dynamic installation script for the Agent Bootstrapper. 
+    This will read autopilot group tags and then deploy correct deployment based on that group tag.
     This will need a publicly accessible azure blob storage account with only
     a device registration certificate inside. This will generate the agent.json 
     file on demand although some modifications may be needed to reach your desired state.
@@ -232,3 +233,4 @@ if (Test-Path -Path $InstallerPath) {
 
 
 }
+
