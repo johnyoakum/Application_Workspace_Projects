@@ -141,6 +141,9 @@ switch ($cleanOrderId) {
     'IT' {
         $deployment = 'IT'
     }
+    default {
+        $deployment = 'Autopilot'
+    }
 }
 
 ##### Tweak the next section of code for the agent.json settings you would like.
@@ -226,5 +229,6 @@ if (Test-Path -Path $InstallerPath) {
 } else {
 
    Write-Warning "Installer executable not found: '$InstallerPath'"
+
 
 }
