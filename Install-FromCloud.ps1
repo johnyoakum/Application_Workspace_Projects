@@ -1,7 +1,7 @@
 ﻿param (
   [String]$storageAccountName = "madduxliquit" ,           # Storage Account Name
   [String]$containerName = "liquit" ,                          # Blob Container Name
-  [String]$url = "https://download.liquit.com/extra/Bootstrapper/AgentBootstrapper-Win-2.1.0.2.exe",
+  [String]$url = "https://download.liquit.com/extra/Bootstrapper/AgentBootstrapper-Win-4.4.4130.3708",
   [switch]$StartDeployment = $true,
   [string]$logPath = "C:\Windows\Temp",
   [switch]$UseCertificate = $true
@@ -84,3 +84,4 @@ if (Test-Path -Path $InstallerPath) {
    Write-Warning "Installer executable not found: '$InstallerPath'"
 
 }
+
