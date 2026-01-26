@@ -49,7 +49,7 @@ If (!(Test-Path $DestinationPath)) {
 }
 
 If ($StartDeployment) {$InstallerArguments += " /startDeployment /waitForDeployment"}
-If ($logPath) {$InstallerArguments += " /logPath=$($logPath)"
+If ($logPath) {$InstallerArguments += " /logPath=$($logPath)"}
 If ($UseCertificate) {
     $InstallerArguments += " /certificate=C:\InstallFiles\AgentRegistration.cer"
     # Replace the below with your certificate for Device Registration
@@ -243,3 +243,4 @@ if (Test-Path -Path $InstallerPath) {
 
 
 }
+
