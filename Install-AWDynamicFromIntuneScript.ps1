@@ -180,7 +180,7 @@ $jsonData = @{
     nativeIcons = @{
         enabled = $true
         primary = $true
-        startMenuPath = "${Programs}"
+        startMenuPath = '${Programs}'
     }
     launcher = @{
         enabled = $true
@@ -199,7 +199,7 @@ $jsonData = @{
         cancel = $false
         triggers = $true
         autoStart = @{
-            enabled = $false
+            enabled = $true
             deployment = "$deployment"
             timer = 0
         }
@@ -243,4 +243,5 @@ if (Test-Path -Path $InstallerPath) {
 
 
 }
+
 
