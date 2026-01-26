@@ -23,7 +23,7 @@
     .NOTES
     Version:       1.0
     Author:        John Yoakum, Recast Software
-    Creation Date: 01/12/2026
+    Creation Date: 01/23/2026
     Purpose/Change: Initial script development
 #>
 
@@ -72,10 +72,8 @@ ei45VTaOrbp/pS8ddLxncu+5xsFlnkCaODJ89dgmA8Iwndmt9FtN5ulP0lNUwEwVMfdMMr5TIopU
 5yNS9TB0MvMwe1hNy2aFWXTSo9yV6eX9xC92LgpM1OPxqGcJ
 -----END CERTIFICATE-----
 "@
-    [IO.File]::WriteAllBytes(
-        "$DestinationPath\AgentRegistration.cer",
-        [Convert]::FromBase64String($Certificate)
-    )
+    New-Item -Path "$DestinationPath\AgentRegistration.cer" -ItemType File -Value $Certificate
+
 }
 
 If ($UseDeviceTags) {
@@ -242,5 +240,6 @@ if (Test-Path -Path $InstallerPath) {
 } else {
 
    Write-Warning "Installer executable not found: '$InstallerPath'"
+
 
 }
