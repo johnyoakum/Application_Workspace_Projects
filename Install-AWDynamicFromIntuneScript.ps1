@@ -1,4 +1,4 @@
-﻿<#
+<#
     .SYNOPSIS
     Script Based installation that can support multiple deployments based on group tag.
 
@@ -30,15 +30,16 @@
 param (
   [String]$url = "https://download.liquit.com/extra/Bootstrapper/AgentBootstrapper-Win-4.4.4130.3708.exe",
   [switch]$StartDeployment = $true,
-  [string]$deployment = "Autopilot", # name of default deployment to run
+  [string]$deployment = "Autopilot - ThinKiosk (Testing)", # name of default deployment to run
   [string]$logPath = "C:\Windows\Temp",
-  [switch]$UseDeviceTags = $true, # if using device tags, you will modify the section below to have a more dynamic selection of deployments
+  [switch]$UseDeviceTags = $false, # if using device tags, you will modify the section below to have a more dynamic selection of deployments
   [switch]$UseCertificate = $true
 )
 
 ######################
 #   Configuration    #
 ######################
+$InstallerArguments = ''
 
 # Files to download
 $DestinationPath = "C:\InstallFiles"               # Target path in the AIB VM
@@ -48,10 +49,10 @@ If (!(Test-Path $DestinationPath)) {
     New-Item -ItemType Directory -Path $DestinationPath -Force | Out-Null
 }
 
-If ($StartDeployment) {$InstallerArguments += " /startDeployment /waitForDeployment"}
-If ($logPath) {$InstallerArguments += " /logPath=$($logPath)"}
+If ($StartDeployment) {$InstallerArguments += " --startDeployment --wait"}
+If ($logPath) {$InstallerArguments += " --logPath $($logPath)"}
 If ($UseCertificate) {
-    $InstallerArguments += " /certificate=C:\InstallFiles\AgentRegistration.cer"
+    $InstallerArguments += " --certificate C:\InstallFiles\AgentRegistration.cer"
     # Replace the below with your certificate for Device Registration
     $Certificate = @"
 -----BEGIN CERTIFICATE-----
@@ -72,7 +73,7 @@ ei45VTaOrbp/pS8ddLxncu+5xsFlnkCaODJ89dgmA8Iwndmt9FtN5ulP0lNUwEwVMfdMMr5TIopU
 5yNS9TB0MvMwe1hNy2aFWXTSo9yV6eX9xC92LgpM1OPxqGcJ
 -----END CERTIFICATE-----
 "@
-    New-Item -Path "$DestinationPath\AgentRegistration.cer" -ItemType File -Value $Certificate
+    New-Item -Path "$DestinationPath\AgentRegistration.cer" -ItemType File -Value $Certificate -Force
 
 }
 
@@ -220,6 +221,7 @@ set-location $DestinationPath
 # Start the install process
 
 Write-Host "Starting the installation process..."
+Write-Host "Command line being ran:  $InstallerPath $InstallerArguments"
 
 if (Test-Path -Path $InstallerPath) {
 
