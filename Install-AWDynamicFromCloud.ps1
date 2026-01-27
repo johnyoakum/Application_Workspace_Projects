@@ -48,10 +48,9 @@ $blobFiles = @(
 $DestinationPath = "C:\InstallFiles"               # Target path in the AIB VM
 $InstallerPath = "C:\InstallFiles\AgentBootstrapper.exe"
 
-If ($StartDeployment) {$InstallerArguments += " /startDeployment /waitForDeployment"}
-If ($logPath) {$InstallerArguments += " /logPath=$($logPath)"
-If ($UseCertificate) {$InstallerArguments += " /certificate=C:\InstallFiles\AgentRegistration.cer"}
-#$InstallerArguments = "/certificate=C:\InstallFiles\AgentRegistration.cer /startDeployment /waitForDeployment /logPath=$($logPath)"
+If ($StartDeployment) {$InstallerArguments += " --startDeployment --wait"}
+If ($logPath) {$InstallerArguments += " --logPath $($logPath)"
+If ($UseCertificate) {$InstallerArguments += " --certificate C:\InstallFiles\AgentRegistration.cer"}
 
 # Define the Azure App Registration details
 $clientId = "2e4e0a31-3cd0-4c3b-b418-b2eca4a9b7e9"  #Client ID
@@ -233,5 +232,6 @@ if (Test-Path -Path $InstallerPath) {
 
 
 }
+
 
 
