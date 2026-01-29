@@ -33,7 +33,9 @@ param (
   [string]$deployment = "Autopilot - ThinKiosk (Testing)", # name of default deployment to run
   [string]$logPath = "C:\Windows\Temp",
   [switch]$UseDeviceTags = $false, # if using device tags, you will modify the section below to have a more dynamic selection of deployments
-  [switch]$UseCertificate = $true
+  [switch]$UseCertificate = $true,
+  [switch]$UsePublicAgent = $true,
+  [String]$AgentURL = "https://download.liquit.com/release/4.4/4091/Liquit-Universal-Agent-Win-4.4.4091.6409.exe"
 )
 
 ######################
@@ -44,6 +46,8 @@ $InstallerArguments = ''
 # Files to download
 $DestinationPath = "C:\InstallFiles"               # Target path in the AIB VM
 $InstallerPath = "C:\InstallFiles\AgentBootstrapper.exe"
+$AgentPath = "C:\InstallFiles\Agent.exe"
+
 # Create destination directory
 If (!(Test-Path $DestinationPath)) {  
     New-Item -ItemType Directory -Path $DestinationPath -Force | Out-Null
@@ -150,6 +154,11 @@ If ($UseDeviceTags) {
 # Download Agent Bootstrapper direct from Internet
 Invoke-WebRequest -Uri $url -OutFile $InstallerPath -UseBasicParsing
 
+If ($UseCurrentAgent) {
+    # Download Agent Bootstrapper direct from Internet
+    Invoke-WebRequest -Uri $AgentURL -OutFile $AgentPath -UseBasicParsing
+}
+
 Write-Output "All downloads completed."
 
 ############################################################
@@ -245,5 +254,6 @@ if (Test-Path -Path $InstallerPath) {
 
 
 }
+
 
 
