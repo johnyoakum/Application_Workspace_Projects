@@ -34,7 +34,6 @@ param (
   [string]$logPath = "C:\Windows\Temp",
   [switch]$UseDeviceTags = $false, # if using device tags, you will modify the section below to have a more dynamic selection of deployments
   [switch]$UseCertificate = $true,
-  [switch]$UsePublicAgent = $true,
   [String]$AgentURL = "https://download.liquit.com/release/4.4/4091/Liquit-Universal-Agent-Win-4.4.4091.6409.exe"
 )
 
@@ -44,9 +43,10 @@ param (
 $InstallerArguments = ''
 
 # Files to download
-$DestinationPath = "C:\InstallFiles"               # Target path in the AIB VM
+$DestinationPath = "C:\InstallFiles"
 $InstallerPath = "C:\InstallFiles\AgentBootstrapper.exe"
 $AgentPath = "C:\InstallFiles\Agent.exe"
+$ZoneURL = "https://john.liquit.com"
 
 # Create destination directory
 If (!(Test-Path $DestinationPath)) {  
@@ -154,7 +154,11 @@ If ($UseDeviceTags) {
 # Download Agent Bootstrapper direct from Internet
 Invoke-WebRequest -Uri $url -OutFile $InstallerPath -UseBasicParsing
 
-If ($UseCurrentAgent) {
+# Download Agent Installer
+Try {
+    # Try to download installer from zone
+    Invoke-WebRequest -Uri "$ZoneURL/api/agent/installers/118A90AD-C2EB-4AE3-A69E-B1154CF46962" -TimeoutSec 60 -OutFile $AgentPath -UseBasicParsing
+} catch {
     # Download Agent Bootstrapper direct from Internet
     Invoke-WebRequest -Uri $AgentURL -OutFile $AgentPath -UseBasicParsing
 }
@@ -169,7 +173,7 @@ Write-Output "All downloads completed."
 
 ##### Tweak the next section of code for the agent.json settings you would like.
 $jsonData = @{
-    zone = "https://john.liquit.com"
+    zone = "$ZoneURL"
     promptZone = "Disabled"
     login = @{
         enabled = $true
@@ -254,6 +258,7 @@ if (Test-Path -Path $InstallerPath) {
 
 
 }
+
 
 
 
