@@ -242,7 +242,7 @@ if (Test-Path -Path $InstallerPath) {
 
        Start-Process -FilePath $InstallerPath -ArgumentList $InstallerArguments -Wait
 
-       Write-Host "Installation process completed."
+       Exit 0
 
    } catch {
 
@@ -258,6 +258,7 @@ if (Test-Path -Path $InstallerPath) {
 
 
 }
+
 
 
 
