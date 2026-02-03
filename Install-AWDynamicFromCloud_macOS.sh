@@ -27,6 +27,8 @@ DestinationPath="$HOME/InstallFiles"
 InstallerPath="$DestinationPath/AgentBootstrapper"
 AgentPath="$DestinationPath/Agent.pkg"
 ZoneURL="https://john.liquit.com"
+appName="Liquit.app"
+appPath="/Applications/$appName"
 
 InstallerArguments=("--startDeployment" "--wait")
 if [ -n "$logPath" ]; then
@@ -37,6 +39,17 @@ fi
 if [ ! -d "$DestinationPath" ]; then
   echo "Creating directory: $DestinationPath"
   mkdir -p "$DestinationPath"
+fi
+
+# Check for already installed and if so, exit
+echo "Checking if $appName is already installed..."
+
+# Check if the application exists at the default path
+if [ -d "$appPath" ]; then
+  echo "$appName is already installed at $appPath. Exiting script..."
+  exit 0  # Exit successfully since the application is already installed
+else
+  echo "$appName is not installed. Proceeding with the installation..."
 fi
 
 # Handle Certificates if enabled
@@ -66,12 +79,12 @@ fi
 # Download files
 echo "Downloading files..."
 curl -L "$url" -o "$InstallerPath"
-#if curl -L "$ZoneURL/api/agent/installers/118A90AD-C2EB-4AE3-A69E-B1154CF46962" --connect-timeout 60 -o "$AgentPath"; then
-#  echo "Agent successfully downloaded from zone URL."
-#else
-#  echo "Failed to download from zone, fallback to Agent URL..."
-#  curl -L "$AgentURL" -o "$AgentPath"
-#fi
+if curl -L "$ZoneURL/api/agent/installers/F84543F0-F440-4200-9A2B-E13FC30C71BB" --connect-timeout 60 -o "$AgentPath"; then
+  echo "Agent successfully downloaded from zone URL."
+else
+  echo "Failed to download from zone, fallback to Agent URL..."
+  curl -L "$AgentURL" -o "$AgentPath"
+fi
 echo "All downloads completed."
 
 # Create JSON configuration
