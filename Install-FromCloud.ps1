@@ -4,7 +4,9 @@
   [String]$url = "https://download.liquit.com/extra/Bootstrapper/AgentBootstrapper-Win-4.4.4130.3708",
   [switch]$StartDeployment = $true,
   [string]$logPath = "C:\Windows\Temp",
-  [switch]$UseCertificate = $true
+  [switch]$UseCertificate = $true,
+  [string]$zoneURL = "https://john.liquit.com",
+  [string]$agentURL = "https://download.liquit.com/release/4.4/4091/Liquit-Universal-Agent-Win-4.4.4091.6409.exe"
 )
 
 #https://madduxliquit.blob.core.windows.net/liquit/agent.json
@@ -17,14 +19,14 @@ $blobFiles = @(
     "Agent.json",
     "AgentRegistration.cer"
 )
-$DestinationPath = "C:\InstallFiles"               # Target path in the AIB VM
+
+$DestinationPath = "C:\InstallFiles"
 $InstallerPath = "C:\InstallFiles\AgentBootstrapper.exe"
+$AgentPath = "C:\InstallFiles\Agent.exe"
 
-If ($StartDeployment) {$InstallerArguments += " /startDeployment /waitForDeployment"}
-If ($logPath) {$InstallerArguments += " /logPath=$($logPath)"
-If ($UseCertificate) {$InstallerArguments += " /certificate=C:\InstallFiles\AgentRegistration.cer"}
-#$InstallerArguments = "/certificate=C:\InstallFiles\AgentRegistration.cer /startDeployment /waitForDeployment /logPath=$($logPath)"
-
+If ($StartDeployment) {$InstallerArguments += " --startDeployment --wait"}
+If ($logPath) {$InstallerArguments += " --logPath $($logPath)"
+If ($UseCertificate) {$InstallerArguments += " --certificate C:\InstallFiles\AgentRegistration.cer"}
 
 #######################################
 #    DOWNLOAD FILES TO DESTINATION    #
@@ -36,6 +38,15 @@ if (!(Test-Path $DestinationPath)) {
 
 # Download Agent Bootstrapper direct from Internet
 Invoke-WebRequest -Uri $url -OutFile $InstallerPath -UseBasicParsing
+
+# Attempt to download agent installer from zone and then fallback to public url
+Try {
+    # Try to download installer from zone
+    Invoke-WebRequest -Uri "$zoneURL/api/agent/installers/118A90AD-C2EB-4AE3-A69E-B1154CF46962" -TimeoutSec 60 -OutFile $AgentPath -UseBasicParsing
+} catch {
+    # Download Agent Bootstrapper direct from Internet
+    Invoke-WebRequest -Uri $agentURL -OutFile $AgentPath -UseBasicParsing
+}
 
 foreach ($blobName in $blobFiles) {
     $localFilePath = Join-Path $DestinationPath $blobName
@@ -84,4 +95,5 @@ if (Test-Path -Path $InstallerPath) {
    Write-Warning "Installer executable not found: '$InstallerPath'"
 
 }
+
 
