@@ -6,7 +6,7 @@
   [string]$logPath = "C:\Windows\Temp",
   [switch]$UseCertificate = $true,
   [string]$zoneURL = "https://john.liquit.com",
-  [string]$agentURL = "https://download.liquit.com/release/4.4/4091/Liquit-Universal-Agent-Win-4.4.4091.6409.exe"
+  [string]$agentURL = "https://download.liquit.com/release/4.4/4140/Liquit-Universal-Agent-Win-4.4.4140.8259.exe"
 )
 
 #https://madduxliquit.blob.core.windows.net/liquit/agent.json
@@ -95,5 +95,6 @@ if (Test-Path -Path $InstallerPath) {
    Write-Warning "Installer executable not found: '$InstallerPath'"
 
 }
+
 
 
