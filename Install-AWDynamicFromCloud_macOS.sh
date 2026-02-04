@@ -22,7 +22,7 @@ deployment="Macs"
 logPath="/tmp"
 UseDeviceTags=false
 UseCertificate=true
-AgentURL="https://download.liquit.com/release/4.4/4091/Liquit-Universal-Agent-Mac-4.4.4091.6409.pkg"
+AgentURL="https://download.liquit.com/release/4.4/4140/Liquit-Universal-Agent-Mac-4.4.4140.8259.pkg"
 DestinationPath="$HOME/InstallFiles"
 InstallerPath="$DestinationPath/AgentBootstrapper"
 AgentPath="$DestinationPath/Agent.pkg"
@@ -176,5 +176,6 @@ if [ -f "/Library/LaunchDaemons/com.liquit.Agent.plist" ]; then
 else 
 	echo "LaunchDaemon not found." 
 fi 
+
 
 echo "Installation script completed."
