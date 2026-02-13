@@ -161,7 +161,7 @@ ForEach ($Package in $AllPackages) {
             $Action = New-LiquitAction -ActionSet $Actionset -Name "Take Over $($Command.DisplayName)" -Type "installpackage" -Enabled $true -Settings @{title = "$($Command.DisplayName)"; value = $CurrentPackage.ID; }
             $Attribute = New-LiquitAttribute -Entity $Action -Link $CurrentPackage -ID 'package'
             $FilterSet = New-LiquitFilterSet -Action $Action
-            $Filter = New-Liquitfilter -FilterSet $FilterSet -Type fileexists -Settings @{path = "'$($Command.FileName)'";} -Value "true"
+            $Filter = New-Liquitfilter -FilterSet $FilterSet -Type fileexists -Settings @{path = "$($Command.FileName)";} -Value "true"
             If ($CreateDesktopIcons -or $CreateStartMenuIcons) {
                 $Icons = New-Object Liquit.API.Server.V3.PackageEntitlementIcons
                 If ($CreateDesktopIcons) {
@@ -195,3 +195,4 @@ ForEach ($Package in $AllPackages) {
             }
         }
     }
+
