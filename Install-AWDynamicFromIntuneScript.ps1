@@ -199,6 +199,7 @@ $jsonData = @{
     launcher = @{
         enabled = $true
         state = "Default"
+        start = "Default"
         tiles = $false
         minimal = $false
         contextMenu = $true
@@ -258,6 +259,7 @@ if (Test-Path -Path $InstallerPath) {
 
 
 }
+
 
 
 
