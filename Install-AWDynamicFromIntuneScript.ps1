@@ -209,7 +209,7 @@ $jsonData = @{
     deployment = @{
         zoneTimeout = 60
         enabled = $false
-        start = $false
+        start = "Auto"
         context = "Device"
         cancel = $false
         triggers = $true
@@ -259,6 +259,7 @@ if (Test-Path -Path $InstallerPath) {
 
 
 }
+
 
 
 
