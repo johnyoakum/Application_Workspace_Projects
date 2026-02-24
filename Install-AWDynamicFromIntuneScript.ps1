@@ -215,7 +215,7 @@ $jsonData = @{
         triggers = $true
         autoStart = @{
             enabled = $true
-            deployment = "$deployment"
+            deployment = $deployment
             timer = 0
         }
 
@@ -259,6 +259,7 @@ if (Test-Path -Path $InstallerPath) {
 
 
 }
+
 
 
 
