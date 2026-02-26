@@ -173,7 +173,7 @@ Write-Output "All downloads completed."
 
 ##### Tweak the next section of code for the agent.json settings you would like.
 $jsonData = @{
-    zone = "$ZoneURL"
+    zone = $ZoneURL
     promptZone = "Disabled"
     login = @{
         enabled = $true
@@ -214,7 +214,7 @@ $jsonData = @{
         cancel = $false
         triggers = $true
         autoStart = @{
-            enabled = $true
+            enabled = $StartDeployment
             deployment = $deployment
             timer = 0
         }
@@ -259,6 +259,7 @@ if (Test-Path -Path $InstallerPath) {
 
 
 }
+
 
 
 
