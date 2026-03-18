@@ -20,7 +20,6 @@ url="https://download.liquit.com/extra/Bootstrapper/AgentBootstrapper-Mac-4.4.41
 StartDeployment=true
 deployment="Macs"
 logPath="/tmp"
-UseDeviceTags=false
 UseCertificate=true
 AgentURL="https://download.liquit.com/release/4.4/4174/Liquit-Universal-Agent-Mac-4.4.4174.8323.pkg"
 DestinationPath="$HOME/InstallFiles"
