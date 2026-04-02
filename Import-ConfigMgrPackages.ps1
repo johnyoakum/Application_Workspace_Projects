@@ -38,7 +38,7 @@ Add-Type -AssemblyName PresentationFramework
 if (-not (Get-Module -ListAvailable -Name Liquit.Server.PowerShell)) {
     Install-Module -Name Liquit.Server.PowerShell -Scope CurrentUser -Force
 }
-if (-not (Get-Module -ListAvailable -Name Liquit.Server.PowerShell)) {
+if (-not (Get-Module -ListAvailable -Name SQLServer)) {
     Install-Module -Name SQLServer -Scope CurrentUser -Force
 }
 
