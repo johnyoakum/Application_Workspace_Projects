@@ -25,7 +25,7 @@ if (-not (Get-Module -ListAvailable -Name Liquit.Server.PowerShell)) {
 
 Import-Module Liquit.Server.PowerShell
 
-$username = "local\$UserAcountA" 
+$username = "LOCAL\$UserAccountA"
 $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, (ConvertTo-SecureString -String "$UserAccountAPreviousPassword" -AsPlainText -Force)
 
 # Connect to Application Workspace and delete UserAccountB
@@ -52,7 +52,7 @@ New-LiquitPermission -Identity $identity -AccessPolicy $accessPolicy
 
 
 
-$username = "local\$UserAcountB" 
+$username = "local\$UserAccountB" 
 $credentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, (ConvertTo-SecureString -String "$UserAccountBNewPassword" -AsPlainText -Force)
 
 # Connect to Application Workspace and delete UserAccountB
