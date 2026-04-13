@@ -7,7 +7,7 @@
     It does need 2 admin accounts in the LOCAL database to perform these operations. And we use each other to recreate themselves.
 
 .EXAMPLE
-    .\Get-InstalledApplications.ps1 -UserAccountA "AdminA' -UserAccountB "AdminB" -UserAccountAPreviousPassword "A PreviousPassword" -UserAccountANewePassword "UserAccountA New Password" -UserAccountBNewPassword "UserAccount B New Password" -LiquitURI "FQDn of Your Zone"
+    .\Reset-AdminAccountPassword.ps1 -UserAccountA "AdminA' -UserAccountB "AdminB" -UserAccountAPreviousPassword "A PreviousPassword" -UserAccountANewePassword "UserAccountA New Password" -UserAccountBNewPassword "UserAccount B New Password" -LiquitURI "FQDn of Your Zone"
 
 #>
 param (
